@@ -6,16 +6,6 @@ Param(
     [Parameter(Mandatory=$true)]$ExportToFolderPath
 )
 
-$MgContext = Get-MgContext -ErrorAction SilentlyContinue
-if(!$MgContext){
-    throw "Not connected to Graph"
-}
-
-$PnPContext = Get-PnPContext -ErrorAction SilentlyContinue
-if(!$PnPContext){
-    throw "Not connected to PnP"
-}
-
 $PnPContext = Get-PnPContext -ErrorAction SilentlyContinue
 if($null -eq $PnPContext){
     throw "Please connect using PnP PowerShell before continuing"
