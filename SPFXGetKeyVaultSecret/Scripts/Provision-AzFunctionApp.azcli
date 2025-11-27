@@ -1,0 +1,21 @@
+region = "UK South"
+RESOURCEGROUPNAME = "RG-AzureUtility"
+saName = "saazureutility" #only numbers and lowercase letters allowed.
+APPNAME = "App-AzureUtilityFunctions"
+keyVaultName = "KV-AzureUtility"
+
+$RGEXISTS = az group exists --name $RESOURCEGROUPNAME
+echo $RGEXISTS
+
+#TODO
+#az keyvault show -n does-not-exist
+
+#if az functionapp show -n $APPNAME -g $RESOURCEGROUPNAME -o none; 
+#then 
+#    echo "functionapp exists" 
+#else 
+#    echo "functionapp doesn't exist" 
+#fi
+
+#TODO
+

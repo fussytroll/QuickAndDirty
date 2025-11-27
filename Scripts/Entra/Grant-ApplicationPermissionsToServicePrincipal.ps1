@@ -1,36 +1,48 @@
 param(
-        [Parameter(Mandatory = $true)]$ClientServicePrincipalId, 
-        [Parameter(Mandatory = $true)]$ResourceServicePrincipalName, 
-        [Parameter(Mandatory = $true)][String[]]$Permissions
-    )
+    #Principal to which permissions need to be granted
+    [Parameter(Mandatory = $true)]$ClientServicePrincipalId, 
+
+    #Display Name of the service e.g. "Microsoft Graph" 
+    #for which permission will be granted
+    [Parameter(Mandatory = $true)]$ResourceServicePrincipalName, 
     
-    #Service for which permission is needed e.g. Microsoft.Graph
-    $ResourceServicePrincipal = Get-MgServicePrincipal -Filter "DisplayName eq '$($ResourceServicePrincipalName)'"
+    <#array of permissions required e.g. @(
+        "User.Read.All",
+        "MailboxSettings.Read",
+        "MailboxItem.Read.All",
+        "MailboxFolder.Read.All",
+        "Sites.Read.All"
+    )#>
+    [Parameter(Mandatory = $true)][String[]]$Permissions
+)
+    
+#Service for which permission is needed e.g. Microsoft.Graph
+$ResourceServicePrincipal = Get-MgServicePrincipal -Filter "DisplayName eq '$($ResourceServicePrincipalName)'"
 
-    #Get Currently assigned roles to the ClientServicePrincipal
-    $CurrentRoleAssignments = Get-MgServicePrincipalAppRoleAssignment -ServicePrincipalId $ClientServicePrincipalId
-    #Obj $CurrentRoleAssignments
-    $AssignedAppRoleIds = $CurrentRoleAssignments.AppRoleId
+#Get Currently assigned roles to the ClientServicePrincipal
+$CurrentRoleAssignments = Get-MgServicePrincipalAppRoleAssignment -ServicePrincipalId $ClientServicePrincipalId
+#Obj $CurrentRoleAssignments
+$AssignedAppRoleIds = $CurrentRoleAssignments.AppRoleId
 
 
-    foreach ($Perm in $Permissions) {
-        Info "Granting $($Perm)"
-        $AppRole = $ResourceServicePrincipal.AppRoles | Where-Object { $_.Value -eq $Perm }
-        if (!$AppRole) {
-            Warn "$($Perm) not available for $($ResourceServicePrincipalName)"
+foreach ($Perm in $Permissions) {
+    Info "Granting $($Perm)"
+    $AppRole = $ResourceServicePrincipal.AppRoles | Where-Object { $_.Value -eq $Perm }
+    if (!$AppRole) {
+        Warn "$($Perm) not available for $($ResourceServicePrincipalName)"
+    }
+    else {
+        if ($AssignedAppRoleIds -contains $AppRole.Id) {
+            Warn "$($AppRole.DisplayName) is already assigned."
         }
         else {
-            if ($AssignedAppRoleIds -contains $AppRole.Id) {
-                Warn "$($AppRole.DisplayName) is already assigned."
+            $params = @{
+                principalId = $ClientServicePrincipalId
+                resourceId  = $ResourceServicePrincipal.Id
+                appRoleId   = $AppRole.Id
             }
-            else {
-                $params = @{
-                    principalId = $ClientServicePrincipalId
-                    resourceId  = $ResourceServicePrincipal.Id
-                    appRoleId   = $AppRole.Id
-                }
 
-                New-MgServicePrincipalAppRoleAssignedTo -ServicePrincipalId $ClientServicePrincipalId -BodyParameter $params
-            }
+            New-MgServicePrincipalAppRoleAssignedTo -ServicePrincipalId $ClientServicePrincipalId -BodyParameter $params
         }
     }
+}
